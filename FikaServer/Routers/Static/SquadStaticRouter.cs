@@ -18,7 +18,7 @@ public sealed class SquadStaticRouter(SquadService squads, NotificationWebSocket
     {
         var invite = squads.InvitePlayer(session.ToString(), data.RecipientId);
         if (invite != null)
-            await notifications.SendAsync(data.RecipientId, new SquadNotification { InviteId = invite.Id, SquadId = invite.SquadId, SenderId = invite.Sender });
+            await notifications.SendToSessionAsync(data.RecipientId, new SquadNotification { InviteId = invite.Id, SquadId = invite.SquadId, SenderId = invite.Sender });
         return response.NoBody(new { success = invite != null, inviteId = invite?.Id });
     }),
     new RouteAction<SquadRequest>("/fika/squad/respond", async (url, data, session, output, cancellationToken) =>
@@ -28,7 +28,7 @@ public sealed class SquadStaticRouter(SquadService squads, NotificationWebSocket
         {
             var members = squads.GetMembers(session.ToString());
             foreach (var member in members)
-                await notifications.SendAsync(member, new SquadNotification { Type = FikaServer.Models.Enums.EFikaNotification.SquadUpdated, SquadId = squads.GetSquadId(member) ?? string.Empty, Members = members });
+                await notifications.SendToSessionAsync(member, new SquadNotification { Type = FikaServer.Models.Enums.EFikaNotification.SquadUpdated, SquadId = squads.GetSquadId(member) ?? string.Empty, Members = members });
         }
         return response.NoBody(new { success });
     }),
@@ -39,7 +39,7 @@ public sealed class SquadStaticRouter(SquadService squads, NotificationWebSocket
         if (success)
         {
             foreach (var member in previousMembers)
-                await notifications.SendAsync(member, new SquadNotification {
+                await notifications.SendToSessionAsync(member, new SquadNotification {
                     Type = FikaServer.Models.Enums.EFikaNotification.SquadUpdated,
                     SquadId = squads.GetSquadId(member) ?? string.Empty,
                     Members = squads.GetMembers(member)
