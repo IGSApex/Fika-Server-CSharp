@@ -10,13 +10,13 @@ using System.Collections.Concurrent;
 namespace FikaServer.Services;
 
 [Injectable(InjectionType.Singleton)]
-public class PresenceService(SaveServer saveServer, TimeUtil timeUtil, ISptLogger<PresenceService> logger)
+public class PresenceService(SaveServer saveServer, TimeUtil timeUtil, ISptLogger<PresenceService> logger, SquadService squads)
 {
     public List<FikaPlayerPresence> AllPlayersPresence
     {
         get
         {
-            return [.. _onlinePlayers.Values];
+            return [.. _onlinePlayers.Select(entry => entry.Value with { ProfileId = entry.Key.ToString(), SquadId = squads.GetSquadId(entry.Key.ToString()) ?? string.Empty })];
         }
     }
 
