@@ -88,6 +88,22 @@ public sealed class SquadService
         }
     }
 
+    public bool Kick(string leader, string member)
+    {
+        lock (_sync)
+        {
+            if (leader == member || !_memberships.TryGetValue(leader, out var squadId)
+                || !_squads.TryGetValue(squadId, out var squad) || squad.Leader != leader
+                || !_memberships.TryGetValue(member, out var memberSquad) || memberSquad != squadId)
+                return false;
+            squad.Members.Remove(member);
+            _memberships.Remove(member);
+            foreach (var inviteId in _invites.Values.Where(x => x.Recipient == member && x.SquadId == squadId).Select(x => x.Id).ToArray())
+                _invites.Remove(inviteId);
+            return true;
+        }
+    }
+
     public bool Leave(string player)
     {
         lock (_sync)
