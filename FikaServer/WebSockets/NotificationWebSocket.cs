@@ -73,7 +73,13 @@ public class NotificationWebSocket(JsonUtil jsonUtil, ISptLogger<NotificationWeb
         return Task.CompletedTask;
     }
 
-    public async Task SendAsync<T>(MongoId sessionID, T message) where T : IFikaNotification
+    public Task SendAsync<T>(MongoId sessionID, T message) where T : IFikaNotification
+        => SendToSessionAsync(sessionID.ToString(), message);
+
+    public Task SendToSessionAsync<T>(string sessionId, T message) where T : IFikaNotification
+        => SendToSessionCoreAsync(sessionId, message);
+
+    private async Task SendToSessionCoreAsync<T>(string sessionID, T message) where T : IFikaNotification
     {
         // Client is not online or not currently connected to the websocket.
         if (!clientWebSockets.TryGetValue(sessionID, out var ws))
