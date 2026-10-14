@@ -1,0 +1,32 @@
+name: Package Default SPT Mods
+
+on:
+  workflow_dispatch:
+
+jobs:
+  package-default-mods:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create default mod package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p downloads package
+          curl -fL --retry 3 -o downloads/uifixes.zip "https://github.com/tyfon7/UIFixes/releases/download/v6.0.4/Tyfon-UIFixes-6.0.4.zip"
+          curl -fL --retry 3 -o downloads/quests.7z "https://github.com/acidphantasm/reffriendlyquests-csharp/releases/download/2.1.0/acidphantasm-reffriendlyquests.7z"
+          curl -fL --retry 3 -o downloads/traders.7z "https://github.com/DrakiaXYZ/SPT-Kaeno-TraderScrolling/releases/download/4.1.0/Kaeno-TraderScrolling-4.1.0.7z"
+          curl -fL --retry 3 -o downloads/containers.7z "https://github.com/DrakiaXYZ/SPT-SearchOpenContainers/releases/download/1.5.0/DrakiaXYZ-SearchOpenContainers-1.5.0.7z"
+          mkdir -p downloads/ladders
+          curl -fL --retry 3 -o downloads/ladders-source.zip "https://github.com/bmpq/spt-ladders/archive/refs/heads/main.zip"
+          for file in downloads/uifixes.zip downloads/quests.7z downloads/traders.7z downloads/containers.7z; do
+            7z x -y "$file" -opackage >/dev/null
+          done
+          echo "Climbable Ladders binary must be installed from its SPT 4.1.6 Forge release." > package/CLIMBABLE-LADDERS-REQUIRED.txt
+          echo "https://sp-mod.com/mod/2649/climbable-ladders" >> package/CLIMBABLE-LADDERS-REQUIRED.txt
+          find package -type f | head -100
+      - name: Upload default mod distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: default-spt-mods
+          path: package/
+          if-no-files-found: error
