@@ -17,7 +17,7 @@ namespace FikaServer.Services;
 [Injectable(InjectionType.Singleton)]
 public class MatchService(ISptLogger<MatchService> logger, LocationLifecycleService locationLifecycleService,
     SaveServer saveServer, FikaServerConfig fikaServerConfig, HeadlessHelper headlessHelper, HeadlessService headlessService,
-    InsuranceService insuranceService, PresenceService presenceService, WebhookService webhookService)
+    InsuranceService insuranceService, PresenceService presenceService, WebhookService webhookService, SquadService squadService)
 {
     public ConcurrentDictionary<MongoId, FikaMatch> Matches { get; set; } = [];
 
@@ -195,7 +195,7 @@ public class MatchService(ISptLogger<MatchService> logger, LocationLifecycleServ
 
         AddPlayerToMatch(data.ServerId, data.ServerId, new FikaPlayer
         {
-            GroupId = string.Empty,
+            GroupId = squadService.GetSquadId(data.ServerId.ToString()) ?? string.Empty,
             IsDead = false,
             IsSpectator = data.IsSpectator
         });
@@ -312,6 +312,8 @@ public class MatchService(ISptLogger<MatchService> logger, LocationLifecycleServ
     /// <param name="data">Data for the player</param>
     public void AddPlayerToMatch(MongoId matchId, MongoId playerId, FikaPlayer data)
     {
+        // Never trust a client-supplied group ID. The squad service owns membership.
+        data.GroupId = squadService.GetSquadId(playerId.ToString()) ?? string.Empty;
         if (Matches.TryGetValue(matchId, out var match))
         {
             if (!match.Players.TryAdd(playerId, data))
