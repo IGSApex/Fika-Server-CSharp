@@ -46,8 +46,9 @@ public sealed class SquadService
     {
         lock (_sync)
         {
-            if (!_invites.Remove(inviteId, out var invite) || invite.Recipient != recipient || invite.ExpiresAtUtc <= DateTime.UtcNow)
+            if (!_invites.TryGetValue(inviteId, out var invite) || invite.Recipient != recipient || invite.ExpiresAtUtc <= DateTime.UtcNow)
                 return false;
+            _invites.Remove(inviteId);
             if (!accept)
                 return true;
             if (_memberships.ContainsKey(recipient) || !_squads.TryGetValue(invite.SquadId, out var squad)
