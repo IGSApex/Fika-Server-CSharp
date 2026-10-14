@@ -20,6 +20,28 @@ public sealed class SquadService
     public sealed record Squad(string Id, string Leader, HashSet<string> Members);
     public sealed record Invite(string Id, string SquadId, string Sender, string Recipient, DateTime ExpiresAtUtc);
 
+    public string CreateSquad(string leader)
+    {
+        if (string.IsNullOrWhiteSpace(leader))
+            return string.Empty;
+        lock (_sync)
+        {
+            if (_memberships.TryGetValue(leader, out var existing))
+                return existing;
+            var id = Guid.NewGuid().ToString("N");
+            _squads[id] = new Squad(id, leader, new HashSet<string>(StringComparer.Ordinal) { leader });
+            _memberships[leader] = id;
+            return id;
+        }
+    }
+
+    public bool IsLeader(string player)
+    {
+        lock (_sync)
+            return _memberships.TryGetValue(player, out var id)
+                && _squads.TryGetValue(id, out var squad) && squad.Leader == player;
+    }
+
     public Invite? InvitePlayer(string sender, string recipient)
     {
         if (string.IsNullOrWhiteSpace(sender) || string.IsNullOrWhiteSpace(recipient) || sender == recipient)
