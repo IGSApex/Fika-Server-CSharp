@@ -28,6 +28,8 @@ public sealed class SquadService
         {
             if (_memberships.ContainsKey(recipient))
                 return null;
+            foreach (var expired in _invites.Values.Where(x => x.ExpiresAtUtc <= DateTime.UtcNow).Select(x => x.Id).ToArray())
+                _invites.Remove(expired);
             if (!_memberships.TryGetValue(sender, out var squadId))
             {
                 squadId = Guid.NewGuid().ToString("N");
@@ -37,6 +39,8 @@ public sealed class SquadService
             if (_squads[squadId].Leader != sender || _squads[squadId].Members.Count >= 5)
                 return null;
             var invite = new Invite(Guid.NewGuid().ToString("N"), squadId, sender, recipient, DateTime.UtcNow.AddMinutes(2));
+            foreach (var prior in _invites.Values.Where(x => x.Sender == sender && x.Recipient == recipient).Select(x => x.Id).ToArray())
+                _invites.Remove(prior);
             _invites[invite.Id] = invite;
             return invite;
         }
@@ -56,6 +60,8 @@ public sealed class SquadService
                 return false;
             squad.Members.Add(recipient);
             _memberships[recipient] = squad.Id;
+            foreach (var other in _invites.Values.Where(x => x.Recipient == recipient).Select(x => x.Id).ToArray())
+                _invites.Remove(other);
             return true;
         }
     }
