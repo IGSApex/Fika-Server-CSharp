@@ -381,7 +381,8 @@ public class MatchService(ISptLogger<MatchService> logger, LocationLifecycleServ
                 return;
             }
 
-            value.GroupId = groupId;
+            // Ignore untrusted group IDs from update requests. Only accepted squads count.
+            value.GroupId = squadService.GetSquadId(playerId.ToString()) ?? string.Empty;
         }
     }
 
