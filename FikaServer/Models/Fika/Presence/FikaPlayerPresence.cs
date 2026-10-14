@@ -5,6 +5,12 @@ namespace FikaServer.Models.Fika.Presence;
 
 public sealed record FikaPlayerPresence
 {
+    [JsonPropertyName("profileId")]
+    public string ProfileId { get; set; } = string.Empty;
+
+    [JsonPropertyName("squadId")]
+    public string SquadId { get; set; } = string.Empty;
+
     [JsonPropertyName("nickname")]
     public string Nickname { get; set; } = string.Empty;
 
