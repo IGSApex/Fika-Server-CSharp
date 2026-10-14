@@ -14,6 +14,11 @@ namespace FikaServer.Routers.Static;
 /// </summary>
 [Injectable]
 public sealed class SquadStaticRouter(SquadService squads, NotificationWebSocket notifications, HttpResponseUtil response, JsonUtil jsonUtil) : StaticRouter(jsonUtil, [
+    new RouteAction<SquadRequest>("/fika/squad/create", (url, data, session, output, cancellationToken) =>
+    {
+        var squadId = squads.CreateSquad(session.ToString());
+        return new ValueTask<string>(response.NoBody(new { success = !string.IsNullOrEmpty(squadId), squadId }));
+    }),
     new RouteAction<SquadRequest>("/fika/squad/invite", async (url, data, session, output, cancellationToken) =>
     {
         var invite = squads.InvitePlayer(session.ToString(), data.RecipientId);
@@ -51,6 +56,7 @@ public sealed class SquadStaticRouter(SquadService squads, NotificationWebSocket
         new ValueTask<string>(response.NoBody(new {
             squadId = squads.GetSquadId(session.ToString()),
             members = squads.GetMembers(session.ToString()),
+    isLeader = squads.IsLeader(session.ToString()),
             pendingInvites = squads.GetPendingInvites(session.ToString())
         })))
 ])
