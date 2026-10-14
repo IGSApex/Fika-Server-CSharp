@@ -37,6 +37,20 @@ public sealed class SquadStaticRouter(SquadService squads, NotificationWebSocket
         }
         return response.NoBody(new { success });
     }),
+    new RouteAction<SquadRequest>("/fika/squad/kick", async (url, data, session, output, cancellationToken) =>
+    {
+        var previousMembers = squads.GetMembers(session.ToString());
+        var success = squads.Kick(session.ToString(), data.RecipientId);
+        if (success)
+            foreach (var member in previousMembers)
+                await notifications.SendToSessionAsync(member, new SquadNotification
+                {
+                    Type = FikaServer.Models.Enums.EFikaNotification.SquadUpdated,
+                    SquadId = squads.GetSquadId(member) ?? string.Empty,
+                    Members = squads.GetMembers(member)
+                });
+        return response.NoBody(new { success });
+    }),
     new RouteAction<SquadRequest>("/fika/squad/leave", async (url, data, session, output, cancellationToken) =>
     {
         var previousMembers = squads.GetMembers(session.ToString());
