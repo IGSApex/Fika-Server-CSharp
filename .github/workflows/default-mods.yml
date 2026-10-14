@@ -16,13 +16,10 @@ jobs:
           curl -fL --retry 3 -o downloads/quests.7z "https://github.com/acidphantasm/reffriendlyquests-csharp/releases/download/2.1.0/acidphantasm-reffriendlyquests.7z"
           curl -fL --retry 3 -o downloads/traders.7z "https://github.com/DrakiaXYZ/SPT-Kaeno-TraderScrolling/releases/download/4.1.0/Kaeno-TraderScrolling-4.1.0.7z"
           curl -fL --retry 3 -o downloads/containers.7z "https://github.com/DrakiaXYZ/SPT-SearchOpenContainers/releases/download/1.5.0/DrakiaXYZ-SearchOpenContainers-1.5.0.7z"
-          mkdir -p downloads/ladders
-          curl -fL --retry 3 -o downloads/ladders-source.zip "https://github.com/bmpq/spt-ladders/archive/refs/heads/main.zip"
-          for file in downloads/uifixes.zip downloads/quests.7z downloads/traders.7z downloads/containers.7z; do
+          curl -fL --retry 3 -o downloads/ladders.zip "https://github.com/bmpq/spt-ladders/releases/download/v1.0.4/tarkin-ladders-v1.0.4.zip"
+          for file in downloads/uifixes.zip downloads/quests.7z downloads/traders.7z downloads/containers.7z downloads/ladders.zip; do
             7z x -y "$file" -opackage >/dev/null
           done
-          echo "Climbable Ladders binary must be installed from its SPT 4.1.6 Forge release." > package/CLIMBABLE-LADDERS-REQUIRED.txt
-          echo "https://sp-mod.com/mod/2649/climbable-ladders" >> package/CLIMBABLE-LADDERS-REQUIRED.txt
           find package -type f | head -100
       - name: Upload default mod distribution
         uses: actions/upload-artifact@v4
