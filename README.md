@@ -1,6 +1,6 @@
-# IGS Gaming Community — Fika Server
+# Fika Server
 
-Community fork of [Project Fika's C# server module](https://github.com/project-fika/Fika-Server-CSharp). It provides multiplayer server-side behavior for the IGS SPT environment, including custom squad management.
+Community fork of [Project Fika's C# server module](https://github.com/project-fika/Fika-Server-CSharp). It provides multiplayer server-side behavior for the SPT environment, including custom squad management.
 
 ## Squad system
 
@@ -30,7 +30,7 @@ Do not treat client-side squad labels as proof of membership; server validation 
 
 ## Build and deployment
 
-This fork depends on the matching SPT/Fika server environment and its referenced assemblies. Check the target framework in the project files and install that .NET SDK; the upstream README listed .NET 9, while other IGS components use .NET 10.
+This fork depends on the matching SPT/Fika server environment and its referenced assemblies. Check the target framework in the project files and install that .NET SDK; the upstream README listed .NET 9, while other components use .NET 10.
 
 ```powershell
 git clone https://github.com/IGSApex/Fika-Server-CSharp.git
@@ -43,6 +43,6 @@ Deploy the compiled server module in the location required by your SPT/Fika serv
 
 ## Related projects
 
-[IGS Fika client](https://github.com/IGSApex/Fika-Plugin) · [IGS SPT server](https://github.com/IGSApex/server-csharp) · [IGS launcher](https://github.com/IGSApex/launcher)
+[Fika client](https://github.com/IGSApex/Fika-Plugin) · [SPT server](https://github.com/IGSApex/server-csharp) · [custom launcher](https://github.com/IGSApex/launcher)
 
 Project Fika and its contributors retain credit for the upstream code. See the repository license and upstream documentation for terms.
