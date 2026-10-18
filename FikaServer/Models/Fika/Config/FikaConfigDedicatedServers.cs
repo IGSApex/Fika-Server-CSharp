@@ -17,6 +17,9 @@ public sealed record FikaConfigDedicatedServers
     [JsonPropertyName("maxPlayersPerRaid")]
     public int MaxPlayersPerRaid { get; set; } = 5;
 
+    [JsonPropertyName("maxHotJoinTime")]
+    public int MaxHotJoinTime { get; set; } = 120;
+
     [JsonPropertyName("setLevelToAverageOfLobby")]
     public bool SetLevelToAverageOfLobby { get; set; } = true;
 }
