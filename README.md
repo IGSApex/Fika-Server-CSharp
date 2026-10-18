@@ -28,19 +28,6 @@ The server also includes `FikaServer/Services/ClientModHashesService.cs`, which 
 
 Do not treat client-side squad labels as proof of membership; server validation must remain authoritative.
 
-## Build and deployment
-
-This fork depends on the matching SPT/Fika server environment and its referenced assemblies. Check the target framework in the project files and install that .NET SDK; the upstream README listed .NET 9, while other components use .NET 10.
-
-```powershell
-git clone https://github.com/IGSApex/Fika-Server-CSharp.git
-cd Fika-Server-CSharp
-dotnet restore
-dotnet build -c Release
-```
-
-Deploy the compiled server module in the location required by your SPT/Fika server installation, and restart the server. Test squad creation, invitations, disconnects, leader behavior and full squads with multiple clients before production use.
-
 ## Related projects
 
 [Fika client](https://github.com/IGSApex/Fika-Plugin) · [SPT server](https://github.com/IGSApex/server-csharp) · [custom launcher](https://github.com/IGSApex/launcher)
