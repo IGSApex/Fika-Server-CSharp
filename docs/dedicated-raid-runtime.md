@@ -43,3 +43,18 @@ Replace player-hosted and headless-client-hosted raids with independent, server-
 ## Non-goal for initial milestone
 
 Do not pretend that allocating a match record in `MatchService` creates a dedicated raid. The worker and authoritative simulation must exist before the new START RAID flow is enabled.
+
+## Capacity and hot-join fallback policy
+
+Default settings: `concurrentServer: 1`, `restartAfterRaid: true`, `maxPlayersPerRaid: 5`, `maxHotJoinTime: 120` (seconds), `setLevelToAverageOfLobby: true`.
+
+- The hot-join timer starts when the raid simulation transitions to RUNNING, not when a user clicks START RAID or while the worker loads.
+- Joining an active raid is allowed only while elapsed running time is at most `maxHotJoinTime` and player capacity is available. Use authoritative server timestamps.
+- If all dedicated instances are occupied, or the available raid's hot-join window has expired, offer **Play Solo** for the requested map instead of silently joining a different raid.
+- **Play Solo** must be an explicit client choice, not a hidden fallback. Solo play must not reserve a dedicated instance or expose a public Fika raid.
+- A player who started a raid before the hot-join deadline but is still loading must have a server-side admission reservation, with expiry, so they are not rejected after the window closes.
+- A group must not be silently split into individual solo sessions. Inform players and let them choose to wait, join an eligible session, or play solo.
+- Apply existing SPT solo progression/save rules; never grant multiplayer rewards based solely on a client claim.
+- Enforce the capacity check atomically when allocating instances or accepting join reservations; simultaneous requests must not exceed `concurrentServer` or `maxPlayersPerRaid`.
+
+These are design requirements. The fallback UI, reservations, server capacity enforcement, and dedicated simulation worker are not yet implemented.
