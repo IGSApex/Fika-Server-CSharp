@@ -9,13 +9,13 @@ namespace FikaServer.Models.Fika.Config;
 public sealed record FikaConfigDedicatedServers
 {
     [JsonPropertyName("concurrentServer")]
-    public int ConcurrentServer { get; set; } = 5;
+    public int ConcurrentServer { get; set; } = 1;
 
     [JsonPropertyName("restartAfterRaid")]
     public bool RestartAfterRaid { get; set; } = true;
 
     [JsonPropertyName("maxPlayersPerRaid")]
-    public int MaxPlayersPerRaid { get; set; } = 10;
+    public int MaxPlayersPerRaid { get; set; } = 5;
 
     [JsonPropertyName("setLevelToAverageOfLobby")]
     public bool SetLevelToAverageOfLobby { get; set; } = true;
