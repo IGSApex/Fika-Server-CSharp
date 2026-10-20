@@ -40,7 +40,13 @@ async Task<bool> Report(string state)
 }
 
 Console.WriteLine($"Fika raid worker prototype: {raidId} / {mapId}");
-if (!await Report("ready")) return 1;
+var registered = false;
+for (var attempt = 0; attempt < 15 && !stopping.IsCancellationRequested; attempt++)
+{
+    if (await Report("ready")) { registered = true; break; }
+    await Task.Delay(500, stopping.Token);
+}
+if (!registered) return 1;
 if (!await Report("running")) return 1;
 
 try
