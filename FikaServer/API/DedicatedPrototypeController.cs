@@ -33,7 +33,9 @@ public sealed class DedicatedPrototypeController(
         if (reserved.Instance is null || reserved.Status != DedicatedRaidAdmissionService.AdmissionStatus.Reserved)
             return Conflict(new { status = reserved.Status.ToString(), soloAvailable = true });
 
-        var exe = Path.Combine(AppContext.BaseDirectory, "FikaRaidWorker",
+        var fikaDirectory = Path.GetDirectoryName(typeof(DedicatedPrototypeController).Assembly.Location)
+            ?? AppContext.BaseDirectory;
+        var exe = Path.Combine(fikaDirectory, "raid_worker",
             OperatingSystem.IsWindows() ? "FikaRaidWorker.exe" : "FikaRaidWorker");
         var backend = $"{Request.Scheme}://127.0.0.1:{Request.Host.Port ?? (Request.IsHttps ? 443 : 80)}";
         var result = supervisor.Start(raidId, request.MapId, exe, backend);
