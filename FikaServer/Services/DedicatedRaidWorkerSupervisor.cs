@@ -118,6 +118,40 @@ public sealed class DedicatedRaidWorkerSupervisor(DedicatedRaidInstanceService i
         lock (_gate) return new Dictionary<string, DateTimeOffset>(_heartbeats);
     }
 
+    /// <summary>
+    /// Stop workers that have stopped reporting. The caller should run this periodically;
+    /// this method only identifies stale workers, avoiding process waits under the lock.
+    /// </summary>
+    public async Task<int> StopUnresponsiveWorkersAsync(TimeSpan heartbeatTimeout, TimeSpan shutdownGrace)
+    {
+        string[] stale;
+        lock (_gate)
+        {
+            var now = DateTimeOffset.UtcNow;
+            stale = _heartbeats
+                .Where(pair => now - pair.Value > heartbeatTimeout)
+                .Select(pair => pair.Key)
+                .ToArray();
+        }
+
+        var stopped = 0;
+        foreach (var raidId in stale)
+        {
+            // Recheck after releasing the lock in case a heartbeat arrived meanwhile.
+            lock (_gate)
+            {
+                if (!_heartbeats.TryGetValue(raidId, out var last) ||
+                    DateTimeOffset.UtcNow - last <= heartbeatTimeout)
+                    continue;
+            }
+
+            if (await StopAsync(raidId, shutdownGrace))
+                stopped++;
+        }
+
+        return stopped;
+    }
+
     /// <summary>Poll process exits and release reserved slots for unexpectedly exited workers.</summary>
     public int ReapExitedWorkers()
     {
