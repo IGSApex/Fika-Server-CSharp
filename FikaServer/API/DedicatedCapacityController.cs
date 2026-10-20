@@ -9,14 +9,19 @@ namespace FikaServer.API;
 [Route("fika/api/dedicated-capacity")]
 public sealed class DedicatedCapacityController(
     DedicatedRaidAdmissionService admission,
+    DedicatedRaidWorkerSupervisor supervisor,
     FikaServerConfig config) : ControllerBase
 {
     [HttpGet]
-    public IActionResult Get() => Ok(new
+    public IActionResult Get()
+    {
+        supervisor.ReapExitedWorkers();
+        return Ok(new
     {
         active = admission.ActiveRaids,
         maximum = Math.Max(0, config.DedicatedServers.ConcurrentServer),
         maxPlayersPerRaid = Math.Max(0, config.DedicatedServers.MaxPlayersPerRaid),
         maxHotJoinTime = Math.Max(0, config.DedicatedServers.MaxHotJoinTime)
     });
+    }
 }
