@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using FikaServer.Models.Fika.Config;
 using SPTarkov.DI.Annotations;
 
 namespace FikaServer.Services;
@@ -100,8 +99,9 @@ public sealed class DedicatedRaidWorkerSupervisor(DedicatedRaidInstanceService i
         Process process;
         lock (_gate)
         {
-            if (!_workers.TryGetValue(raidId, out process!))
+            if (!_workers.TryGetValue(raidId, out var activeProcess))
                 return false;
+            process = activeProcess;
             instances.BeginShutdown(raidId);
         }
 
