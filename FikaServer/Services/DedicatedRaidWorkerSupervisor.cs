@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Security.Cryptography;
 using SPTarkov.DI.Annotations;
 
 namespace FikaServer.Services;
@@ -12,6 +13,8 @@ public sealed class DedicatedRaidWorkerSupervisor(DedicatedRaidInstanceService i
 {
     private readonly object _gate = new();
     private readonly Dictionary<string, Process> _workers = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string> _tokens = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, DateTimeOffset> _heartbeats = new(StringComparer.Ordinal);
 
     public sealed record WorkerStartResult(bool Success, string? Error = null, int? ProcessId = null);
 
@@ -19,10 +22,10 @@ public sealed class DedicatedRaidWorkerSupervisor(DedicatedRaidInstanceService i
     /// Starts an explicitly configured worker executable with raid and map identifiers.
     /// Does not mark the instance ready: a future authenticated readiness handshake must do so.
     /// </summary>
-    public WorkerStartResult Start(string raidId, string mapId, string executablePath)
+    public WorkerStartResult Start(string raidId, string mapId, string executablePath, string backendUrl)
     {
         if (string.IsNullOrWhiteSpace(raidId) || string.IsNullOrWhiteSpace(mapId) ||
-            string.IsNullOrWhiteSpace(executablePath))
+            string.IsNullOrWhiteSpace(executablePath) || string.IsNullOrWhiteSpace(backendUrl))
             return new(false, "Missing raid ID, map ID, or worker executable.");
 
         if (!File.Exists(executablePath))
@@ -48,6 +51,11 @@ public sealed class DedicatedRaidWorkerSupervisor(DedicatedRaidInstanceService i
             info.ArgumentList.Add(raidId);
             info.ArgumentList.Add("--map-id");
             info.ArgumentList.Add(mapId);
+            info.ArgumentList.Add("--backend-url");
+            info.ArgumentList.Add(backendUrl);
+            var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+            info.ArgumentList.Add("--worker-token");
+            info.ArgumentList.Add(token);
 
             Process? process = null;
             try
@@ -60,15 +68,54 @@ public sealed class DedicatedRaidWorkerSupervisor(DedicatedRaidInstanceService i
                 }
 
                 _workers.Add(raidId, process);
+                _tokens.Add(raidId, token);
+                _heartbeats.Add(raidId, DateTimeOffset.UtcNow);
                 return new(true, ProcessId: process.Id);
             }
             catch (Exception ex)
             {
                 process?.Dispose();
+                _tokens.Remove(raidId);
+                _heartbeats.Remove(raidId);
                 instances.CompleteShutdown(raidId, failed: true);
                 return new(false, ex.Message);
             }
         }
+    }
+
+    /// <summary>Accept lifecycle messages only from the worker launched for this raid.</summary>
+    public bool Report(string raidId, string mapId, string token, string state)
+    {
+        lock (_gate)
+        {
+            if (!_tokens.TryGetValue(raidId, out var expected) ||
+                !CryptographicOperations.FixedTimeEquals(
+                    System.Text.Encoding.UTF8.GetBytes(expected),
+                    System.Text.Encoding.UTF8.GetBytes(token)))
+                return false;
+
+            var instance = instances.GetInstances().FirstOrDefault(x => x.RaidId == raidId);
+            if (instance is null || !string.Equals(instance.MapId, mapId, StringComparison.Ordinal))
+                return false;
+            if (!_workers.TryGetValue(raidId, out var process) || process.HasExited)
+                return false;
+
+            var accepted = state switch
+            {
+                "ready" => instances.MarkReady(raidId),
+                "running" => instances.MarkRunning(raidId, DateTimeOffset.UtcNow),
+                "heartbeat" => instance.State == DedicatedRaidInstanceService.InstanceState.Running,
+                "stopped" => instances.BeginShutdown(raidId),
+                _ => false
+            };
+            if (accepted) _heartbeats[raidId] = DateTimeOffset.UtcNow;
+            return accepted;
+        }
+    }
+
+    public IReadOnlyDictionary<string, DateTimeOffset> GetLastHeartbeats()
+    {
+        lock (_gate) return new Dictionary<string, DateTimeOffset>(_heartbeats);
     }
 
     /// <summary>Poll process exits and release reserved slots for unexpectedly exited workers.</summary>
@@ -86,6 +133,8 @@ public sealed class DedicatedRaidWorkerSupervisor(DedicatedRaidInstanceService i
             {
                 _workers.Remove(raidId, out var process);
                 process?.Dispose();
+                _tokens.Remove(raidId);
+                _heartbeats.Remove(raidId);
                 instances.CompleteShutdown(raidId, failed: true);
             }
 
@@ -131,6 +180,8 @@ public sealed class DedicatedRaidWorkerSupervisor(DedicatedRaidInstanceService i
                 {
                     _workers.Remove(raidId);
                     process.Dispose();
+                    _tokens.Remove(raidId);
+                    _heartbeats.Remove(raidId);
                     instances.CompleteShutdown(raidId);
                 }
             }
