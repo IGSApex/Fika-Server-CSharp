@@ -129,6 +129,25 @@ public sealed class SquadService
             return _memberships.GetValueOrDefault(player);
     }
 
+    /// <summary>Resolve a player's spawn group from server-owned squad membership.</summary>
+    public string GetSpawnGroup(string player)
+    {
+        lock (_sync)
+            return _memberships.TryGetValue(player, out var squadId)
+                ? "squad:" + squadId
+                : "solo:" + player;
+    }
+
+    /// <summary>Compare server-owned memberships; solo players never count as squadmates.</summary>
+    public bool AreSquadmates(string first, string second)
+    {
+        if (string.IsNullOrWhiteSpace(first) || string.IsNullOrWhiteSpace(second) || first == second)
+            return false;
+        lock (_sync)
+            return _memberships.TryGetValue(first, out var id)
+                && _memberships.TryGetValue(second, out var other) && id == other;
+    }
+
     public string[] GetMembers(string player)
     {
         lock (_sync)
