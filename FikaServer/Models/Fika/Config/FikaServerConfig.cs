@@ -13,9 +13,6 @@ public record FikaServerConfig
     [JsonPropertyName("natPunchServer")]
     public FikaConfigNatPunchServer NatPunchServer { get; set; } = new();
 
-    [JsonPropertyName("dedicatedServers")]
-    public FikaConfigDedicatedServers DedicatedServers { get; set; } = new();
-
     [JsonPropertyName("headless")]
     public FikaConfigHeadless Headless { get; set; } = new();
 }
