@@ -1,5 +1,4 @@
 using FikaServer.Models.Fika.Config;
-using FikaServer.Services;
 using SPTarkov.Server.Core.DI;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -34,7 +33,6 @@ public sealed class FikaDIConstruct : IOnDIConstruct
 
         serviceCollection.AddSingleton(paths);
         serviceCollection.AddSingleton(config);
-        serviceCollection.AddHostedService<DedicatedRaidWorkerWatchdog>();
     }
 
     private static void EnforceReviveValues(FikaServerConfig config)
